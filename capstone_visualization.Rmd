@@ -1,0 +1,89 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(readxl)
+library(tidyverse)
+library(ggplot2)
+library(caret)
+library(glmnet)
+library(readr)
+library(dplyr)
+library(plotly)
+```
+```{r}
+pne_flu_vacc <- read_csv('data/pne_flu_vacc.csv')
+```
+```{r}
+summary(pne_flu_vacc)
+```
+
+
+```{r}
+pne_flu_vacc %>% names()
+```
+```{r}
+#Looking at the trend
+trend <- ggplot(pne_flu_vacc, aes(x = season, deaths_pne_flu)) +
+  geom_point(color = 'red') +
+  #geom_area(fill = 'cyan', alpha = .1) +
+  labs(x = 'Flu Season'
+       , y = 'Deaths from Pneumonia and Influenza'
+       , title = "Deaths Trend on Pne and Influ") +
+        theme_bw() +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank())
+ggplotly(trend, width = 800, height = 500)
+```
+```{r}
+trend2 <- ggplot(pne_flu_vacc, aes(deaths_pne_flu)) +
+  geom_histogram(color = 'red') +
+  #geom_area(fill = 'cyan', alpha = .1) +
+  labs(x = 'Flu Season'
+       , y = 'Deaths from Pneumonia and Influenza'
+       , title = "Deaths Trend on Pne and Influ") +
+        theme_bw() +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank())
+ggplotly(trend2, width = 800, height = 500)
+```
+```{r}
+no_dup <- distinct(pne_flu_vacc, states, season, deaths_pne_flu) %>% 
+  select(states, season, deaths_pne_flu) %>% 
+  top_n(n = 10)
+no_dup[order(-no_dup$deaths_pne_flu),]
+```
+
+
+```{r}
+t3 <- ggplot(pne_flu_vacc,aes(x=reorder(states,deaths_pne_flu),y=deaths_pne_flu)) + geom_col(stat="identity", color='skyblue',fill='red')+
+  labs(x = "States", y = "Deaths", title = "Deaths from Pne Flu")+
+  scale_color_gradient2(midpoint = mid, low = "blue", mid = "white",
+                            high = "red")+
+  theme_bw() +
+  theme(axis.line = element_line(colour = "black"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.background = element_blank())
+ggplotly(t3, width = 900, height = 400)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
