@@ -16,70 +16,104 @@ library(glmnet)
 library(readr)
 library(dplyr)
 library(plotly)
+library(ggpmisc)
+library(ggpubr)
 ```
 ```{r}
 pne_flu_vacc <- read_csv('data/pne_flu_vacc.csv')
 ```
 ```{r}
-summary(pne_flu_vacc)
+glimpse(pne_flu_vacc)
 ```
 
 
 ```{r}
-pne_flu_vacc %>% names()
+summarise(pne_flu_vacc, mean = mean(percent_vacc))
 ```
 ```{r}
 #Looking at the trend
-trend <- ggplot(pne_flu_vacc, aes(x = season, deaths_pne_flu)) +
-  geom_point(color = 'red') +
+deaths_trend <- read_csv('data/deaths_trend.csv')
+trend1 <- deaths_trend %>% 
+  ggplot(aes(x = season, y = deaths_pne_flu, group = 1)) + geom_col(color = 'red', fill = 'gray')+
   #geom_area(fill = 'cyan', alpha = .1) +
   labs(x = 'Flu Season'
        , y = 'Deaths from Pneumonia and Influenza'
-       , title = "Deaths Trend on Pne and Influ") +
+       , title = "") +
         theme_bw() +
   theme(axis.line = element_line(colour = "black"),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
     panel.background = element_blank())
-ggplotly(trend, width = 800, height = 500)
+ggplotly(trend1, width = 800, height = 500)
 ```
 ```{r}
-trend2 <- ggplot(pne_flu_vacc, aes(deaths_pne_flu)) +
-  geom_histogram(color = 'red') +
-  #geom_area(fill = 'cyan', alpha = .1) +
-  labs(x = 'Flu Season'
-       , y = 'Deaths from Pneumonia and Influenza'
-       , title = "Deaths Trend on Pne and Influ") +
-        theme_bw() +
-  theme(axis.line = element_line(colour = "black"),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank())
-ggplotly(trend2, width = 800, height = 500)
+d1 <- ggplot(deaths_trend,aes(deaths_pne_flu)) + geom_histogram(aes(y=..density..), col = 'red', alpha = .2) + geom_density(col = 3) + labs(title = "Distribution of the Share of Renewable Electricity Generation Across the Countries") + labs(x = "Deaths from Pneumonia & Influenza",y = "Frequency")+
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+ggplotly(d1, width = 800, height = 500)
 ```
 ```{r}
-no_dup <- distinct(pne_flu_vacc, states, season, deaths_pne_flu) %>% 
+top_10 <- distinct(pne_flu_vacc, states, season, deaths_pne_flu) %>% 
   select(states, season, deaths_pne_flu) %>% 
   top_n(n = 10)
-no_dup[order(-no_dup$deaths_pne_flu),]
+top_10[order(-top_10$deaths_pne_flu),]
+```
+```{r}
+bottom_10 <- distinct(pne_flu_vacc, states, season, deaths_pne_flu) %>% 
+  select(states, season, deaths_pne_flu) %>% 
+  top_n(n = -10)
+bottom_10[order(bottom_10$deaths_pne_flu),]
 ```
 
 
 ```{r}
-t3 <- ggplot(pne_flu_vacc,aes(x=reorder(states,deaths_pne_flu),y=deaths_pne_flu)) + geom_col(stat="identity", color='skyblue',fill='red')+
-  labs(x = "States", y = "Deaths", title = "Deaths from Pne Flu")+
-  scale_color_gradient2(midpoint = mid, low = "blue", mid = "white",
-                            high = "red")+
-  theme_bw() +
+tn_pne_flu <- read_csv('data/tn_pne_flu.csv')
+tn_pne_flu
+```
+```{r}
+#Looking at the trend
+trend_tn <- tn_pne_flu %>% 
+  ggplot(aes(x = season, y = deaths_pne_flu, group = 1)) + geom_line(color = 'red', fill = 'gray')+
+  geom_area(fill = 'cyan', alpha = .1) +
+  labs(x = 'Flu Season'
+       , y = 'Deaths from Pneumonia and Influenza'
+       , title = "") +
+        theme_bw() +
   theme(axis.line = element_line(colour = "black"),
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
-    axis.text.x = element_text(angle = 45, hjust = 1),
     panel.background = element_blank())
-ggplotly(t3, width = 900, height = 400)
+ggplotly(trend_tn, width = 800, height = 500)
+```
+```{r}
+r1 <- tn_pne_flu %>%
+  ggplot(aes(x = percent_vacc, y = deaths_pne_flu)) + geom_point(col=2,shape=1) + geom_smooth(method = "lm")+
+  labs(title= "Deaths from Pneumonia & Influenza vs. Percentage Vaccination", x="Percentage Vaccination", y= "Deaths from Pneumonia & Influenza")+
+  theme(axis.text=element_text(size=12),
+  axis.title=element_text(size=14,face="bold"))
+ggplotly(r1, width = 800, height = 500)
+```
+```{r}
+r2 <- pne_flu_vacc %>%
+  ggplot(aes(x = percent_vacc, y = deaths_pne_flu)) + geom_point(col=2,shape=1) + geom_smooth(method = "lm")+
+  labs(title= "Deaths from Pneumonia & Influenza vs. Percentage Vaccination", x="Percentage Vaccination", y= "Deaths from Pneumonia & Influenza")+
+  theme(axis.text=element_text(size=12),
+  axis.title=element_text(size=14,face="bold"))
+ggplotly(r2, width = 800, height = 500)
+```
+```{r}
+ggscatter(pne_flu_vacc, x = "percent_vacc", y = "deaths_pne_flu", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson")+
+  theme(legend.position='none')
+```
+```{r}
+ggscatter(tn_pne_flu, x = "percent_vacc", y = "deaths_pne_flu", 
+          add = "reg.line", conf.int = TRUE, 
+          cor.coef = TRUE, cor.method = "pearson")+
+  theme(legend.position='none')
 ```
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
